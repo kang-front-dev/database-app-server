@@ -12,18 +12,21 @@ const connection = mysql.createConnection({
   database: process.env.DATABASE,
   port: process.env.DB_PORT,
 });
-setInterval(() => {
-  console.log({
+
+console.log(
+  {
     host: process.env.HOST,
     user: process.env.DB_USER,
     password: process.env.PASSWORD,
     database: process.env.DATABASE,
     port: process.env.DB_PORT,
-  },'connection info');
-}, 2000);
+  },
+  'connection info'
+);
+
 connection.connect((err) => {
   if (err) {
-    console.log(err.message,'connection err');
+    console.log(err.message, 'connection err');
   }
   console.log('database ' + connection.state);
 });
@@ -124,7 +127,6 @@ class DBService {
         userDbInfo.password
       );
       if (!passwordResult) {
-
         return false;
       }
       const response = await new Promise((resolve, reject) => {
@@ -139,7 +141,7 @@ class DBService {
         );
       });
       if (userDbInfo.status_block === 1) {
-        return {message: 'User is blocked'};
+        return { message: 'User is blocked' };
       }
       const token = jwt.sign(
         {
@@ -151,7 +153,9 @@ class DBService {
           expiresIn: 60 * 60,
         }
       );
-      return response.affectedRows ? {token: token,email: userData.email,id: userDbInfo.id,} : false;
+      return response.affectedRows
+        ? { token: token, email: userData.email, id: userDbInfo.id }
+        : false;
     } catch (err) {
       console.log(err);
     }

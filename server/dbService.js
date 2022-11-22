@@ -12,7 +12,15 @@ const connection = mysql.createConnection({
   database: process.env.DATABASE,
   port: process.env.DB_PORT,
 });
-
+setInterval(() => {
+  console.log({
+    host: process.env.HOST,
+    user: process.env.DB_USER,
+    password: process.env.PASSWORD,
+    database: process.env.DATABASE,
+    port: process.env.DB_PORT,
+  },'connection info');
+}, 2000);
 connection.connect((err) => {
   if (err) {
     console.log(err.message,'connection err');

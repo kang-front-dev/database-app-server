@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const dotenv = require('dotenv');
+const io = require('socket.io')(http)
 dotenv.config();
 
 const dbService = require('./dbService')
@@ -11,6 +12,24 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 const db = dbService.getDbServiceInstance()
+
+io.on('connection', (socket) => {
+  console.log(`Client with id ${socket.id} connected`)
+  clients.push(socket.id)
+
+  socket.emit('message', "I'm server")
+
+  socket.on('message', (message) =>
+    console.log('Message: ', message)
+  )
+
+  socket.on('disconnect', () => {
+    clients.splice(clients.indexOf(socket.id), 1)
+    console.log(`Client with id ${socket.id} disconnected`)
+  })
+})
+
+
 // create
 app.post('/insert',async (request,response)=>{
   

@@ -13,8 +13,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 const db = dbService.getDbServiceInstance()
-console.log(http,'http');
-console.log(io,'socket.io');
 io.on('connection', (socket) => {
   console.log(`Client with id ${socket.id} connected`)
 

@@ -53,7 +53,7 @@ app.patch('/checkToken',(request,response)=>{
 })
 
 app.patch('/authUser',(request,response)=>{
-  console.log(request.body,'request body');
+  console.log(request.body,'request body AUTH');
   const result = db.authUser(request.body);
 
   result
@@ -68,7 +68,7 @@ app.patch('/authUser',(request,response)=>{
   .catch(err => console.log(err))
 })
 app.patch('/blockUser',(request,response)=>{
-  console.log(request.body,'request body');
+  // console.log(request.body,'request body BLOCK');
   const result = db.blockUser(request.body);
 
   result
@@ -111,6 +111,7 @@ app.delete('/deleteUser',(request,response)=>{
   .catch(err => console.log(err))
 })
 
-app.listen(process.env.PORT, ()=>{
+app.listen(process.env.PORT, (info)=>{
+  console.log(info,'info');
   console.log('app is running');
 })

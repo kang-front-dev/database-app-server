@@ -13,10 +13,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 const db = dbService.getDbServiceInstance()
-
+console.log(http,'http');
+console.log(io,'socket.io');
 io.on('connection', (socket) => {
   console.log(`Client with id ${socket.id} connected`)
-  clients.push(socket.id)
 
   socket.emit('message', "I'm server")
 
@@ -25,7 +25,6 @@ io.on('connection', (socket) => {
   )
 
   socket.on('disconnect', () => {
-    clients.splice(clients.indexOf(socket.id), 1)
     console.log(`Client with id ${socket.id} disconnected`)
   })
 })

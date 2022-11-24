@@ -5,29 +5,6 @@ const dotenv = require('dotenv');
 
 const mysql = require('mysql');
 
-dotenv.config();
-
-const ws = require('ws');
-const wss = new ws.WebSocketServer({
-  port: 8080,
-  perMessageDeflate: {
-    zlibDeflateOptions: {
-      // See zlib defaults.
-      chunkSize: 1024,
-      memLevel: 7,
-      level: 3,
-    },
-    zlibInflateOptions: {
-      chunkSize: 10 * 1024,
-    },
-  },
-});
-
-wss.on('connection', function connection(ws) {
-  console.log('someone connected');
-  ws.send('something');
-});
-
 const getAllData = require('./api/getAll');
 const checkToken = require('./api/checkToken');
 const deleteUser = require('./api/deleteUser');
@@ -35,7 +12,6 @@ const blockUser = require('./api/block');
 const unblockUser = require('./api/unblock');
 const authUser = require('./api/log');
 const regUserData = require('./api/reg');
-const { WebSocketServer } = require('ws');
 
 dotenv.config();
 const connectionConfig = {

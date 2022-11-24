@@ -39,7 +39,7 @@ app.post('/insert', async (request, response) => {
       }
       return response
         .status(200)
-        .json({ success: true, email: res.email, id: res.insertId });
+        .json({ success: true, email: res.email, id: res.id });
     })
     .catch((err) => {
       console.log(err);
@@ -249,7 +249,7 @@ async function authUser(userData) {
     const token = jwt.sign(
       {
         email: userData.email,
-        id: userDbInfo.id,
+        id: userDbInfo._id,
       },
       process.env.JWT_KEY,
       {
@@ -259,7 +259,7 @@ async function authUser(userData) {
     console.log(response, 'response from Login');
 
     return response
-      ? { token: token, email: userData.email, }
+      ? { token: token, email: userData.email,id: userDbInfo._id }
       : false;
   } catch (err) {
     console.log(err);
@@ -277,8 +277,8 @@ async function regUserData(data) {
     
     const response = await users.insertOne(data);
     console.log(response, 'response from Reg');
-
-    return response.acknowledged ? { success: true,email: data.email,id: response.insertedId } : { success: false };
+    console.log(response.insertedId.toString());
+    return response.acknowledged ? { success: true,email: data.email,id: response.insertedId.toString() } : { success: false };
   } catch (err) {
     console.log(err, 'error');
     return err;

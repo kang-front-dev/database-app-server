@@ -5,15 +5,6 @@ const dotenv = require('dotenv');
 
 const mysql = require('mysql');
 
-const getAllData = require('./api/getAll');
-const checkToken = require('./api/checkToken');
-const deleteUser = require('./api/deleteUser');
-const blockUser = require('./api/block');
-const unblockUser = require('./api/unblock');
-const authUser = require('./api/log');
-const regUserData = require('./api/reg');
-
-dotenv.config();
 const connectionConfig = {
   host: process.env.HOST,
   user: process.env.DB_USER,
@@ -31,6 +22,17 @@ connection.connect((err) => {
   }
   console.log('database ' + connection.state);
 });
+
+const getAllData = require('./api/getAll');
+const checkToken = require('./api/checkToken');
+const deleteUser = require('./api/deleteUser');
+const blockUser = require('./api/block');
+const unblockUser = require('./api/unblock');
+const authUser = require('./api/log');
+const regUserData = require('./api/reg');
+
+dotenv.config();
+
 
 app.use(cors());
 app.use(express.json());

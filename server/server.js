@@ -30,11 +30,10 @@ io.on('connection', (socket) => {
 
 // create
 app.post('/insert',async (request,response)=>{
-  
+  console.log(request.body,'request body REGISTER');
   const result = db.regUserData(request.body)
   result
   .then(res => {
-    console.log(res,'success');
     if(res.message === 'Email already exists'){
       return response.status(401).json({success: false})
     }

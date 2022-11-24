@@ -111,7 +111,6 @@ app.delete('/deleteUser',(request,response)=>{
   .catch(err => console.log(err))
 })
 
-app.listen(process.env.PORT, (info)=>{
-  console.log(info,'info');
+app.listen(process.env.PORT,process.env.SERVERHOST, ()=>{
   console.log('app is running');
 })

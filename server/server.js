@@ -5,6 +5,9 @@ const dotenv = require('dotenv');
 
 const mysql = require('mysql');
 
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
 const connectionConfig = {
   host: process.env.HOST,
   user: process.env.DB_USER,
@@ -21,16 +24,7 @@ connection.connect((err) => {
   console.log('database ' + connection.state);
 });
 
-const getAllData = require('./api/getAll');
-const checkToken = require('./api/checkToken');
-const deleteUser = require('./api/deleteUser');
-const blockUser = require('./api/block');
-const unblockUser = require('./api/unblock');
-const authUser = require('./api/log');
-const regUserData = require('./api/reg');
-
 dotenv.config();
-
 
 app.use(cors());
 app.use(express.json());
@@ -145,3 +139,189 @@ app.delete('/deleteUser', (request, response) => {
 app.listen(process.env.PORT, () => {
   console.log('app is running');
 });
+
+async function getAllData() {
+  try {
+    const response = await new Promise((resolve, reject) => {
+      const query = 'SELECT * FROM users;';
+
+      connection.query(query, (err, results) => {
+        if (err) reject(new Error(err.message));
+        resolve(results);
+      });
+    });
+    // console.log(response);
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+}
+async function checkToken(token) {
+  try {
+    const tokenOpened = jwt.decode(token);
+    console.log(tokenOpened);
+    const response = await new Promise((resolve, reject) => {
+      const query = `SELECT * FROM users WHERE id=(?)`;
+      connection.query(query, [tokenOpened.id], (err, results) => {
+        if (err) reject(new Error(err.message));
+        resolve(results);
+      });
+    });
+    if (response) {
+      return tokenOpened.email;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+async function deleteUser(userData) {
+  try {
+    const response = await new Promise((resolve, reject) => {
+      const query = `DELETE FROM users WHERE id=(?)`;
+      connection.query(query, [userData.id], (err, results) => {
+        if (err) reject(new Error(err.message));
+        resolve(results);
+      });
+    });
+    return response.affectedRows ? true : false;
+  } catch (err) {
+    console.log(err);
+  }
+}
+async function unblockUser(userData) {
+  try {
+    const response = await new Promise((resolve, reject) => {
+      const query = `UPDATE users SET status_block=(?) WHERE id=(?)`;
+      connection.query(query, [0, userData.id], (err, results) => {
+        if (err) reject(new Error(err.message));
+        resolve(results);
+      });
+    });
+    return response.affectedRows ? true : false;
+  } catch (err) {
+    console.log(err);
+  }
+}
+async function blockUser(userData) {
+  try {
+    const response = await new Promise((resolve, reject) => {
+      const query = `UPDATE users SET status_block=(?) WHERE id=(?)`;
+      connection.query(query, [1, userData.id], (err, results) => {
+        if (err) reject(new Error(err.message));
+        resolve(results);
+      });
+    });
+    return response.affectedRows ? true : false;
+  } catch (err) {
+    console.log(err);
+  }
+}
+async function findUser(email, returnInfo) {
+  try {
+    const response = await new Promise((resolve, reject) => {
+      const query = `SELECT * FROM users WHERE email=(?)`;
+      connection.query(query, [email], (err, results) => {
+        if (err) reject(new Error(err.message));
+        resolve(results);
+      });
+    });
+    if (response.length !== 0) {
+      if (returnInfo) {
+        return response[0];
+      }
+      return true;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    console.log(err);
+  }
+}
+async function authUser(userData) {
+  try {
+    let userDbInfo = await findUser(userData.email, true);
+    if (!userDbInfo) {
+      return false;
+    }
+    const passwordResult = bcrypt.compareSync(
+      userData.password,
+      userDbInfo.password
+    );
+    if (!passwordResult) {
+      return false;
+    }
+    const response = await new Promise((resolve, reject) => {
+      const query = `UPDATE users SET log_date=(?) WHERE email=(?)`;
+      connection.query(
+        query,
+        [userData.lastLoginDate, userData.email],
+        (err, results) => {
+          if (err) reject(new Error(err.message));
+          resolve(results);
+        }
+      );
+    });
+    if (userDbInfo.status_block === 1) {
+      return { message: 'User is blocked' };
+    }
+    const token = jwt.sign(
+      {
+        email: userData.email,
+        id: userDbInfo.id,
+      },
+      process.env.JWT_KEY,
+      {
+        expiresIn: 60 * 60,
+      }
+    );
+    return response.affectedRows
+      ? { token: token, email: userData.email, id: userDbInfo.id }
+      : false;
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+async function regUserData(data) {
+  try {
+    const alreadyExist = await findUser(data.email, true);
+    const response = await new Promise(async (resolve, reject) => {
+      if (alreadyExist) {
+        resolve({
+          message: 'Email already exists',
+        });
+      } else {
+        const salt = bcrypt.genSaltSync(10);
+        const passHash = bcrypt.hashSync(data.password, salt);
+
+        const query = `INSERT INTO users (name, email, reg_date, log_date, status_block, password) VALUES (?,?,?,?,?,?)`;
+        connection.query(
+          query,
+          [
+            data.name,
+            data.email,
+            data.regDate,
+            data.lastLoginDate,
+            data.status,
+            passHash,
+          ],
+          (err, results) => {
+            if (err) reject(err.message);
+
+            resolve(results);
+          }
+        );
+      }
+    });
+    console.log(alreadyExist, 'userInfo from findUser');
+    return response.affectedRows
+      ? { ...response, email: data.email }
+      : response;
+  } catch (err) {
+    console.log(err, 'error');
+    return err;
+  }
+}

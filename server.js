@@ -35,7 +35,9 @@ app.post('/insert', async (request, response) => {
   result
     .then((res) => {
       if (res.message === 'Email already exists') {
-        return response.status(401).json({ success: false });
+        return response
+          .status(401)
+          .json({ success: false, message: res.message });
       }
       return response
         .status(200)
@@ -170,9 +172,9 @@ async function getAllData() {
 
 async function deleteUser(userData) {
   try {
-    const id = new ObjectId(userData._id)
+    const id = new ObjectId(userData._id);
     const query = { _id: id };
-    const find = await users.findOne(query)
+    const find = await users.findOne(query);
     console.log(find);
     const response = await users.deleteOne(query);
     console.log(response);
@@ -183,7 +185,7 @@ async function deleteUser(userData) {
 }
 async function unblockUser(userData) {
   try {
-    const id = new ObjectId(userData._id)
+    const id = new ObjectId(userData._id);
     const query = { _id: id };
     const queryUpdate = {
       $set: {
@@ -198,7 +200,7 @@ async function unblockUser(userData) {
 }
 async function blockUser(userData) {
   try {
-    const id = new ObjectId(userData._id)
+    const id = new ObjectId(userData._id);
     const query = { _id: id };
     const queryUpdate = {
       $set: {
@@ -227,14 +229,14 @@ async function authUser(userData) {
     let userDbInfo = await findUser(userData.email);
     console.log(userDbInfo, 'userDbInfo');
     if (!userDbInfo) {
-      return false;
+      return { success: false, message: 'User does not exist' };
     }
     const passwordResult = bcrypt.compareSync(
       userData.password,
       userDbInfo.password
     );
     if (!passwordResult) {
-      return false;
+      return { success: false, message: 'Wrong password' };
     }
     const query = { email: userData.email };
     const queryUpdate = {
@@ -244,7 +246,7 @@ async function authUser(userData) {
     };
     const response = users.updateOne(query, queryUpdate);
     if (userDbInfo.statusBlock === 1) {
-      return { message: 'User is blocked' };
+      return { success: false, message: 'User is blocked' };
     }
     const token = jwt.sign(
       {
@@ -259,8 +261,16 @@ async function authUser(userData) {
     console.log(response, 'response from Login');
 
     return response
-      ? { token: token, email: userData.email,id: userDbInfo._id }
-      : false;
+      ? {
+          success: true,
+          token: token,
+          email: userData.email,
+          id: userDbInfo._id,
+        }
+      : {
+        success: false,
+        message: 'Unknown error'
+      };
   } catch (err) {
     console.log(err);
   }
@@ -272,13 +282,15 @@ async function regUserData(data) {
     if (alreadyExist) {
       return { message: 'Email already exists' };
     }
-    const salt = bcrypt.genSaltSync(10)
-    data.password = bcrypt.hashSync(data.password,salt)
-    
+    const salt = bcrypt.genSaltSync(10);
+    data.password = bcrypt.hashSync(data.password, salt);
+
     const response = await users.insertOne(data);
     console.log(response, 'response from Reg');
     console.log(response.insertedId.toString());
-    return response.acknowledged ? { success: true,email: data.email,id: response.insertedId.toString() } : { success: false };
+    return response.acknowledged
+      ? { success: true, email: data.email, id: response.insertedId.toString() }
+      : { success: false, message: 'Unknown error' };
   } catch (err) {
     console.log(err, 'error');
     return err;

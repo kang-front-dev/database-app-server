@@ -8,7 +8,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const client = new MongoClient(
-  'mongodb+srv://web_app:test123@database-app.gtnffcc.mongodb.net/?retryWrites=true&w=majority'
+  'mongodb+srv://admin:admin@cluster0.vcewazx.mongodb.net/?retryWrites=true&w=majority'
 );
 
 const startMongo = async () => {
@@ -21,7 +21,7 @@ const startMongo = async () => {
   }
 };
 startMongo();
-const users = client.db().collection('users');
+const users = client.db('database-app').collection('users');
 dotenv.config();
 
 app.use(cors());
@@ -38,10 +38,11 @@ app.post('/insert', async (request, response) => {
         return response
           .status(401)
           .json({ success: false, message: res.message });
+      } else {
+        return response
+          .status(200)
+          .json({ success: true, email: res.email, id: res.id });
       }
-      return response
-        .status(200)
-        .json({ success: true, email: res.email, id: res.id });
     })
     .catch((err) => {
       console.log(err);
@@ -268,9 +269,9 @@ async function authUser(userData) {
           id: userDbInfo._id,
         }
       : {
-        success: false,
-        message: 'Unknown error'
-      };
+          success: false,
+          message: 'Unknown error',
+        };
   } catch (err) {
     console.log(err);
   }
@@ -286,8 +287,6 @@ async function regUserData(data) {
     data.password = bcrypt.hashSync(data.password, salt);
 
     const response = await users.insertOne(data);
-    console.log(response, 'response from Reg');
-    console.log(response.insertedId.toString());
     return response.acknowledged
       ? { success: true, email: data.email, id: response.insertedId.toString() }
       : { success: false, message: 'Unknown error' };
